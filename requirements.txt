@@ -1,0 +1,26 @@
+# Google API
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
+# HTTP requests and parsing
+requests
+beautifulsoup4
+
+# Academic search
+habanero  # Crossref API
+internetarchive  # Internet Archive API
+libgen-api  # LibGen API
+
+# Web scraping/automation
+selenium
+webdriver-manager
+
+# Optional: for anti-bot protection
+cloudscraper
+
+# NLP / Semantic Analysis
+spacy
+
+# Testing
+pytest

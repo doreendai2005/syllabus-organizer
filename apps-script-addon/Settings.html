@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 16px;
+      margin: 0;
+    }
+    h3 {
+      color: #1a73e8;
+      margin-top: 0;
+    }
+    label {
+      display: block;
+      margin-top: 16px;
+      margin-bottom: 4px;
+      font-weight: 500;
+      color: #202124;
+    }
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+    .help-text {
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 4px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 24px;
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    button:hover {
+      background-color: #1765cc;
+    }
+    button:disabled {
+      background-color: #dadce0;
+      cursor: not-allowed;
+    }
+    .message {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 4px;
+      display: none;
+    }
+    .message.success {
+      background-color: #e6f4ea;
+      color: #137333;
+      border: 1px solid #bee6d2;
+    }
+    .message.error {
+      background-color: #fce8e6;
+      color: #c5221f;
+      border: 1px solid #f6aea9;
+    }
+  </style>
+</head>
+<body>
+  <h3>Settings</h3>
+
+  <form id="settingsForm">
+    <label for="email">
+      Email Address *
+      <div class="help-text">Required for Unpaywall API access</div>
+    </label>
+    <input type="email" id="email" required>
+
+    <label for="coreApiKey">
+      CORE API Key (Optional)
+      <div class="help-text">Increases rate limits for CORE searches</div>
+    </label>
+    <input type="text" id="coreApiKey">
+
+    <label for="nlpApiKey">
+      Google NLP API Key (Optional)
+      <div class="help-text">Improves classification accuracy to 85-90%</div>
+    </label>
+    <input type="text" id="nlpApiKey">
+
+    <button type="submit" id="saveBtn">Save Settings</button>
+  </form>
+
+  <div id="message" class="message"></div>
+
+  <script>
+    // Load existing settings on page load
+    google.script.run
+      .withSuccessHandler(function(settings) {
+        document.getElementById('email').value = settings.email || '';
+        document.getElementById('coreApiKey').value = settings.coreApiKey || '';
+        document.getElementById('nlpApiKey').value = settings.nlpApiKey || '';
+      })
+      .loadSettings();
+
+    // Handle form submission
+    document.getElementById('settingsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const settings = {
+        email: document.getElementById('email').value,
+        coreApiKey: document.getElementById('coreApiKey').value,
+        nlpApiKey: document.getElementById('nlpApiKey').value
+      };
+
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          showMessage('Settings saved successfully!', 'success');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Settings';
+        })
+        .withFailureHandler(function(error) {
+          showMessage('Error: ' + error.message, 'error');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Settings';
+        })
+        .saveSettings(settings);
+    });
+
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = 'message ' + type;
+      msg.style.display = 'block';
+
+      setTimeout(function() {
+        msg.style.display = 'none';
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

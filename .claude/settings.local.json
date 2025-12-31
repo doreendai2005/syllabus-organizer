@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Eebfetch",
+      "Bbash",
+      "Bash(git commit:*)"
+    ]
+  }
+}

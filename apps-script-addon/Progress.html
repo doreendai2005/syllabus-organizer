@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 16px;
+      margin: 0;
+    }
+    h3 {
+      color: #1a73e8;
+      margin-top: 0;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 24px;
+      background-color: #e8eaed;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background-color: #1a73e8;
+      transition: width 0.3s ease;
+    }
+    .status {
+      font-size: 14px;
+      color: #5f6368;
+      margin: 8px 0;
+    }
+    .stats {
+      margin: 20px 0;
+    }
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e8eaed;
+    }
+    .stat-label {
+      color: #5f6368;
+    }
+    .stat-value {
+      font-weight: 500;
+      color: #202124;
+    }
+    button {
+      margin-top: 16px;
+      padding: 10px 24px;
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #1765cc;
+    }
+    button.secondary {
+      background-color: #fff;
+      color: #1a73e8;
+      border: 1px solid #dadce0;
+    }
+    button.secondary:hover {
+      background-color: #f8f9fa;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h3>Processing Syllabus</h3>
+
+  <div id="progress-container">
+    <div class="progress-bar">
+      <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+    </div>
+
+    <div id="status" class="status">Starting...</div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <span class="stat-label">Readings Found:</span>
+        <span class="stat-value" id="stat-readings">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">PDFs Linked:</span>
+        <span class="stat-value" id="stat-linked">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Not Found:</span>
+        <span class="stat-value" id="stat-notfound">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Uncertain Items:</span>
+        <span class="stat-value" id="stat-uncertain">0</span>
+      </div>
+    </div>
+
+    <button id="startBtn" onclick="startProcessing()">Start Processing</button>
+    <button id="cancelBtn" class="secondary hidden" onclick="cancelProcessing()">Cancel</button>
+  </div>
+
+  <script>
+    let processing = false;
+
+    function startProcessing() {
+      processing = true;
+      document.getElementById('startBtn').classList.add('hidden');
+      document.getElementById('cancelBtn').classList.remove('hidden');
+      document.getElementById('status').textContent = 'Processing...';
+
+      google.script.run
+        .withSuccessHandler(handleProcessingComplete)
+        .withFailureHandler(handleError)
+        .processDocument();
+
+      // Start polling for progress updates
+      updateProgress();
+    }
+
+    function cancelProcessing() {
+      processing = false;
+      document.getElementById('startBtn').classList.remove('hidden');
+      document.getElementById('cancelBtn').classList.add('hidden');
+      document.getElementById('status').textContent = 'Cancelled';
+    }
+
+    function updateProgress() {
+      if (!processing) return;
+
+      google.script.run
+        .withSuccessHandler(function(status) {
+          // Update progress bar
+          document.getElementById('progress-fill').style.width = status.percentComplete + '%';
+
+          // Update status
+          let statusText = status.status;
+          if (status.currentIndex && status.totalParagraphs) {
+            statusText += ` (${status.currentIndex} / ${status.totalParagraphs})`;
+          }
+          document.getElementById('status').textContent = statusText;
+
+          // Update stats
+          if (status.statistics) {
+            document.getElementById('stat-readings').textContent = status.statistics.readings || 0;
+            document.getElementById('stat-linked').textContent = status.statistics.linked || 0;
+            document.getElementById('stat-notfound').textContent = status.statistics.notFound || 0;
+          }
+          document.getElementById('stat-uncertain').textContent = status.uncertainCount || 0;
+
+          // Continue polling if still processing
+          if (status.status !== 'COMPLETE' && processing) {
+            setTimeout(updateProgress, 2000);  // Poll every 2 seconds
+          }
+        })
+        .getProgressStatus();
+    }
+
+    function handleProcessingComplete(result) {
+      processing = false;
+      document.getElementById('startBtn').classList.remove('hidden');
+      document.getElementById('cancelBtn').classList.add('hidden');
+
+      if (result.status === 'COMPLETE') {
+        document.getElementById('status').textContent = 'Processing complete!';
+        document.getElementById('progress-fill').style.width = '100%';
+
+        // Update final stats
+        if (result.statistics) {
+          document.getElementById('stat-readings').textContent = result.statistics.readings || 0;
+          document.getElementById('stat-linked').textContent = result.statistics.linked || 0;
+          document.getElementById('stat-notfound').textContent = result.statistics.notFound || 0;
+        }
+        if (result.uncertainItems) {
+          document.getElementById('stat-uncertain').textContent = result.uncertainItems.length;
+        }
+      } else if (result.status === 'PAUSED') {
+        document.getElementById('status').textContent = result.message || 'Processing paused...';
+        // Continue polling
+        setTimeout(updateProgress, 2000);
+      }
+    }
+
+    function handleError(error) {
+      processing = false;
+      document.getElementById('startBtn').classList.remove('hidden');
+      document.getElementById('cancelBtn').classList.add('hidden');
+      document.getElementById('status').textContent = 'Error: ' + error.message;
+    }
+  </script>
+</body>
+</html>

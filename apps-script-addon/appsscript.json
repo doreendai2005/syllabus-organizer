@@ -1,0 +1,25 @@
+{
+  "timeZone": "America/New_York",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/documents.currentonly",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "addOns": {
+    "common": {
+      "name": "Syllabus Organizer",
+      "logoUrl": "https://www.gstatic.com/images/branding/product/1x/docs_48dp.png",
+      "layoutProperties": {
+        "primaryColor": "#4285f4"
+      }
+    },
+    "docs": {
+      "homepageTrigger": {
+        "enabled": true
+      }
+    }
+  }
+}

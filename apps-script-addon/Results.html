@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 16px;
+      margin: 0;
+    }
+    h3 {
+      color: #1a73e8;
+      margin-top: 0;
+    }
+    .summary {
+      background-color: #e6f4ea;
+      border: 1px solid #bee6d2;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .summary h4 {
+      margin: 0 0 12px 0;
+      color: #137333;
+    }
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+    }
+    .uncertain-items {
+      margin-top: 24px;
+    }
+    .uncertain-item {
+      background-color: #fef7e0;
+      border: 1px solid #fdd663;
+      border-radius: 4px;
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .item-text {
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: #202124;
+    }
+    .item-score {
+      font-size: 12px;
+      color: #5f6368;
+      margin-bottom: 8px;
+    }
+    .item-actions {
+      margin-top: 8px;
+    }
+    .item-actions button {
+      padding: 6px 12px;
+      margin-right: 8px;
+      border: 1px solid #dadce0;
+      background-color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .item-actions button:hover {
+      background-color: #f8f9fa;
+    }
+    button.primary {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      width: 100%;
+      margin-top: 16px;
+    }
+    button.primary:hover {
+      background-color: #1765cc;
+    }
+    .no-uncertain {
+      color: #5f6368;
+      font-style: italic;
+      text-align: center;
+      padding: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h3>Processing Complete!</h3>
+
+  <div class="summary">
+    <h4>Summary</h4>
+    <div class="stat">
+      <span>Readings found:</span>
+      <strong id="total-readings">0</strong>
+    </div>
+    <div class="stat">
+      <span>PDFs linked:</span>
+      <strong id="total-linked">0</strong>
+    </div>
+    <div class="stat">
+      <span>Not found:</span>
+      <strong id="total-notfound">0</strong>
+    </div>
+    <div class="stat">
+      <span>Uncertain items:</span>
+      <strong id="total-uncertain">0</strong>
+    </div>
+  </div>
+
+  <div class="uncertain-items">
+    <h4>Review Uncertain Items</h4>
+    <div id="uncertain-list"></div>
+  </div>
+
+  <button class="primary" onclick="google.script.host.close()">Close</button>
+
+  <script>
+    // Load results on page load
+    google.script.run
+      .withSuccessHandler(displayResults)
+      .getProgressStatus();
+
+    function displayResults(status) {
+      // Update summary stats
+      if (status.statistics) {
+        document.getElementById('total-readings').textContent = status.statistics.readings || 0;
+        document.getElementById('total-linked').textContent = status.statistics.linked || 0;
+        document.getElementById('total-notfound').textContent = status.statistics.notFound || 0;
+      }
+      document.getElementById('total-uncertain').textContent = status.uncertainCount || 0;
+
+      // Load uncertain items
+      google.script.run
+        .withSuccessHandler(displayUncertainItems)
+        .loadProgress();
+    }
+
+    function displayUncertainItems(progress) {
+      const list = document.getElementById('uncertain-list');
+      const items = progress.uncertainItems || [];
+
+      if (items.length === 0) {
+        list.innerHTML = '<div class="no-uncertain">No uncertain items - all citations were clearly classified!</div>';
+        return;
+      }
+
+      list.innerHTML = items.map((item, index) => `
+        <div class="uncertain-item">
+          <div class="item-text">${escapeHtml(item.text.substring(0, 150))}${item.text.length > 150 ? '...' : ''}</div>
+          <div class="item-score">
+            Score: ${item.readingScore || 0} |
+            Reasons: ${(item.reasons || []).join(', ') || 'None'}
+          </div>
+          <div class="item-actions">
+            <button onclick="markAsReading(${item.index})">Mark as Reading</button>
+            <button onclick="markAsOther(${item.index})">Mark as Other</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function markAsReading(index) {
+      // TODO: Implement manual classification
+      alert('This feature will be implemented in a future update. For now, you can manually edit the document.');
+    }
+
+    function markAsOther(index) {
+      // TODO: Implement manual classification
+      alert('This feature will be implemented in a future update. For now, you can manually edit the document.');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
